@@ -1,5 +1,11 @@
 const countriesContainter = document.querySelector(".countries");
+const btn = document.querySelector(".btn");
+const body = document.querySelector("body");
 //AJAX HTTPS calls to get data from an web APIx
+
+const renderError = function (msg) {
+  countriesContainter.insertAdjacentText("beforeend", msg);
+};
 
 const renderData = function (data) {
   const html = `
@@ -16,41 +22,41 @@ const renderData = function (data) {
   countriesContainter.insertAdjacentHTML("beforeend", html);
 };
 
-const getCountryAndNeigbour = function (country) {
-  const request = new XMLHttpRequest();
-  request.open(
-    "GET",
-    `https://countries-api-836d.onrender.com/countries/name/${country}`,
-  );
-  request.send();
+// const getCountryAndNeigbour = function (country) {
+//   const request = new XMLHttpRequest();
+//   request.open(
+//     "GET",
+//     `https://countries-api-836d.onrender.com/countries/name/${country}`,
+//   );
+//   request.send();
 
-  //console.log(request.responseText);
-  request.addEventListener("load", function () {
-    //   console.log(this.responseText);
-    const [data] = JSON.parse(this.responseText);
-    console.log(data);
-    // render data 1
-    renderData(data);
+//   //console.log(request.responseText);
+//   request.addEventListener("load", function () {
+//     //   console.log(this.responseText);
+//     const [data] = JSON.parse(this.responseText);
+//     console.log(data);
+//     // render data 1
+//     renderData(data);
 
-    //get neighour country:
-    const neigbour = data.borders;
+//     //get neighour country:
+//     const neigbour = data.borders;
 
-    if (!neigbour) return;
+//     if (!neigbour) return;
 
-    const request2 = new XMLHttpRequest();
-    request2.open(
-      "GET",
-      `https://countries-api-836d.onrender.com/countries/alpha/${neigbour}`,
-    );
-    request2.send();
-    request2.addEventListener("load", function () {
-      const data2 = JSON.parse(this.responseText);
-      console.log(data2);
-      renderData(data2);
-    });
-  });
-};
-getCountryAndNeigbour("portugal");
+//     const request2 = new XMLHttpRequest();
+//     request2.open(
+//       "GET",
+//       `https://countries-api-836d.onrender.com/countries/alpha/${neigbour}`,
+//     );
+//     request2.send();
+//     request2.addEventListener("load", function () {
+//       const data2 = JSON.parse(this.responseText);
+//       console.log(data2);
+//       renderData(data2);
+//     });
+//   });
+// };
+// getCountryAndNeigbour("portugal");
 
 // using promise insted of AJAX
 const reques2 = fetch(
@@ -58,16 +64,37 @@ const reques2 = fetch(
 );
 console.log(reques2);
 
+// got a promise using fetch then handle it using .then,and display the data using .json
 // handling promise:
 const getCountryData = function (country) {
   fetch(`https://countries-api-836d.onrender.com/countries/name/${country}`)
-    .then(function (response) {
-      console.log(response);
-      return response.json;
+    .then(
+      (response) => response.json(),
+      //  (err) => alert(err), //error handling using callback .
+    )
+    .then((data) => {
+      renderData(data[0]);
+      const neigbour = data[0].borders[0];
+
+      if (!neigbour) return;
+
+      return fetch(
+        `https://countries-api-836d.onrender.com/countries/alpha/${neigbour}`,
+      );
     })
-    .then(function (data) {
-      console.log(data);
-    });
+    .then((response) => response.json())
+    .then((data) => renderData(data))
+    .catch((err) => {
+      //   alert(err);
+      console.error(`${err} :(`);
+      renderError(`Somthing went wrong ${err} :(`);
+    }) //better way of catching error because it shows all errors happened in chain.
+    .finally((countriesContainter.style.opacity = 1)); //finally works anyways if the promise is fulfiled or rejected.
 };
 
-getCountryData("pakistan");
+//three states: then,catch,finally. then gives a new promise,catch finds errors,finally just executes
+//whatever happens.
+
+btn.addEventListener("click", () => {
+  getCountryData("pakistan");
+});
